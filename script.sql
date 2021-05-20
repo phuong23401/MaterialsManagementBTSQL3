@@ -156,10 +156,8 @@ JOIN `orders` O ON IB.`orderID` = O.`orderID`
 JOIN `supplier` S ON O.`supID` = S.`supID`
 GROUP BY M.`matCode`;
 
-
 -- 3. số phiếu nhập hàng, mã vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập. Và chỉ liệt kê các chi tiết nhập có số lượng nhập > 500
 SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, M.`matCode`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
-JOIN `ordersDetails` OD ON IBD.`matID` = OD.`matID`
 JOIN `materials` M ON IBD.`matID` = M.`matID`
 WHERE IBD.`impNum` > 500
 GROUP BY M.`matCode`;
@@ -176,3 +174,125 @@ SELECT COUNT(EBD.`ebdID`) AS `exbNum`, EB.`customerName`, M.`matCode`, M.`matNam
 JOIN `exportBill` EB ON EBD.`expBillID` = EB.`billID`
 JOIN `materials` M ON EBD.`matID` = M.`matID`
 GROUP BY M.`matCode`;
+
+
+-- TẠO VIEW
+-- 1. Tạo view có tên vw_CTPNHAP bao gồm các thông tin sau: số phiếu nhập hàng, mã vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập
+CREATE VIEW `vw_CTPNHAP` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, M.`matCode`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+GROUP BY M.`matCode`;
+
+-- 2. Tạo view có tên vw_CTPNHAP_VT bao gồm các thông tin sau: số phiếu nhập hàng, mã vật tư, tên vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập
+CREATE VIEW `vw_CTPNHAP_VT` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, M.`matCode`, M.`matName`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+GROUP BY M.`matCode`;
+
+-- 3.  Tạo view có tên vw_CTPNHAP_VT_PN bao gồm các thông tin sau: số phiếu nhập hàng, ngày nhập hàng, số đơn đặt hàng, mã vật tư, tên vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập
+CREATE VIEW `vw_CTPNHAP_VT_PN` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, IB.`impDate`, COUNT(OD.`odID`) AS `orderNum`, M.`matCode`, M.`matName`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `ordersDetails` OD ON IBD.`matID` = OD.`matID`
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+JOIN `importBill` IB ON IBD.`impBillID` = IB.`billID`
+JOIN `orders` O ON IB.`orderID` = O.`orderID`
+GROUP BY M.`matCode`;
+
+-- 4. Tạo view có tên vw_CTPNHAP_VT_PN_DH bao gồm các thông tin sau: số phiếu nhập hàng, ngày nhập hàng, số đơn đặt hàng, mã nhà cung cấp, mã vật tư, tên vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập
+CREATE VIEW `vw_CTPNHAP_VT_PN_DH` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, IB.`impDate`, COUNT(OD.`odID`) AS `orderNum`, S.`supCode`, M.`matCode`, M.`matName`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `ordersDetails` OD ON IBD.`matID` = OD.`matID`
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+JOIN `importBill` IB ON IBD.`impBillID` = IB.`billID`
+JOIN `orders` O ON IB.`orderID` = O.`orderID`
+JOIN `supplier` S ON O.`supID` = S.`supID`
+GROUP BY M.`matCode`;
+
+-- 5. Tạo view có tên vw_CTPNHAP_loc bao gồm các thông tin sau: số phiếu nhập hàng, mã vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập. Và chỉ liệt kê các chi tiết nhập có số lượng nhập > 500
+CREATE VIEW `vw_CTPNHAP_loc` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, M.`matCode`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+WHERE IBD.`impNum` > 500
+GROUP BY M.`matCode`;
+
+-- 6. Tạo view có tên vw_CTPNHAP_VT_loc bao gồm các thông tin sau: số phiếu nhập hàng, mã vật tư, tên vật tư, số lượng nhập, đơn giá nhập, thành tiền nhập. Và chỉ liệt kê các chi tiết nhập vật tư có đơn vị tính là Viên
+CREATE VIEW `vw_CTPNHAP_VT_loc` AS
+SELECT COUNT(IBD.`ibdID`) AS `ibdNum`, M.`matCode`, M.`matName`, IBD.`impNum`, IBD.`impCost`, (`impNum` * `impCost`) AS `impPrice` FROM `impBillDetails` IBD
+JOIN `ordersDetails` OD ON IBD.`matID` = OD.`matID`
+JOIN `materials` M ON IBD.`matID` = M.`matID`
+WHERE M.`unit` = 'Viên'
+GROUP BY M.`matCode`;
+
+-- 7. Tạo view có tên vw_CTPXUAT bao gồm các thông tin sau: số phiếu xuất hàng, mã vật tư, số lượng xuất, đơn giá xuất, thành tiền xuất
+CREATE VIEW `vw_CTPXUAT` AS
+SELECT COUNT(EBD.`ebdID`) AS `exbNum`, M.`matCode`, EBD.`expNum`, EBD.`expCost`, (`expNum` * `expCost`) AS `expPrice` FROM `expBillDetails` EBD
+JOIN `materials` M ON EBD.`matID` = M.`matID`
+GROUP BY M.`matCode`;
+
+-- 8. Tạo view có tên vw_CTPXUAT_VT bao gồm các thông tin sau: số phiếu xuất hàng, mã vật tư, tên vật tư, số lượng xuất, đơn giá xuất
+CREATE VIEW `vw_CTPXUAT_VT` AS
+SELECT COUNT(EBD.`ebdID`) AS `exbNum`, M.`matCode`, M.`matName`, EBD.`expNum`, EBD.`expCost` FROM `expBillDetails` EBD
+JOIN `materials` M ON EBD.`matID` = M.`matID`
+GROUP BY M.`matCode`;
+
+-- 9. Tạo view có tên vw_CTPXUAT_VT_PX bao gồm các thông tin sau: số phiếu xuất hàng, tên khách hàng, mã vật tư, tên vật tư, số lượng xuất, đơn giá xuất
+CREATE VIEW `vw_CTPXUAT_VT_PX` AS
+SELECT COUNT(EBD.`ebdID`) AS `exbNum`, EB.`customerName`, M.`matCode`, M.`matName`, EBD.`expNum`, EBD.`expCost` FROM `expBillDetails` EBD
+JOIN `exportBill` EB ON EBD.`expBillID` = EB.`billID`
+JOIN `materials` M ON EBD.`matID` = M.`matID`
+GROUP BY M.`matCode`;
+
+
+-- TẠO STORE PROCEDURE
+-- 1.  Tạo stored procedure (SP) cho biết tổng số lượng cuối của vật tư với mã vật tư là tham số vào
+DELIMITER //
+CREATE PROCEDURE `lastMaterialNum` (IN `matCode` VARCHAR(20))
+BEGIN
+	SELECT (W.`originalNum` + W.`importNum` - W.`exportNum`) AS `lastNum` FROM `warehouse` W
+    JOIN `materials` M ON W.`matID` = M.`matID`
+    WHERE M.`matCode` = `matCode`;
+END //
+DELIMITER ;
+CALL lastMaterialNum('M02');
+
+-- 2. Tạo SP cho biết tổng tiền xuất của vật tư với mã vật tư là tham số vào
+DELIMITER //
+CREATE PROCEDURE `totalPrice` (IN `matCode` VARCHAR(20))
+BEGIN
+	SELECT SUM(EBD.`expNum` * EBD.`expCost`) AS `totalExpPrice` FROM `expBillDetails` EBD
+    JOIN `materials` M ON EBD.`matID` = M.`matID`
+    WHERE M.`matCode` = `matCode`;
+END //
+DELIMITER ;
+CALL totalPrice('M01');
+
+-- 3. Tạo SP cho biết tổng số lượng đặt theo số đơn hàng với số đơn hàng là tham số vào
+DELIMITER //
+CREATE PROCEDURE `totalOrderNum` (IN `orderID` INT)
+BEGIN
+	SELECT SUM(OD.`orderNum`) AS `totalOrderNum` FROM `ordersDetails` OD
+    JOIN `orders` O ON OD.`orderID` = O.`orderID`
+    WHERE O.`orderID` = `orderID`;
+END //
+DELIMITER ;
+CALL totalOrderNum(3);
+
+-- 4. Tạo SP dùng để thêm một đơn đặt hàng
+DELIMITER //
+CREATE PROCEDURE `insertOrders` (IN `orderID` INT, `orderCode` VARCHAR(20), `orderDate` DATE, `supID` INT)
+BEGIN
+	INSERT INTO `orders` VALUES
+    (`orderID`, `orderCode`, `orderDate`, `supID`);
+END //
+DELIMITER ;
+CALL insertOrders(20, 'OD04', '2021-05-20', 2);
+
+-- 5. Tạo SP dùng để thêm một chi tiết đơn đặt hàng
+DELIMITER //
+CREATE PROCEDURE `insertOrdersDetails` (IN `odID` INT, `orderID` INT, `matID` INT, `orderNum` INT)
+BEGIN
+	INSERT INTO `ordersDetails` VALUES
+    (`odID`, `orderID`, `matID`, `orderNum`);
+END //
+DELIMITER ;
+CALL insertOrdersDetails(21, 20, 1, 50);
